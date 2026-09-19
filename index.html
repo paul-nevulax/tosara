@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medieval Autumn</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 0;
+            background: url('https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=2000&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+            color: #ffffff;
+            font-family: 'Montserrat', sans-serif;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; text-align: center; overflow: hidden;
+            position: relative;
+        }
+
+        .overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle, rgba(15, 5, 40, 0.5) 0%, rgba(5, 0, 20, 0.85) 100%);
+            z-index: 0;
+        }
+
+        .screen {
+            position: absolute;
+            z-index: 10;
+            width: 90%; max-width: 650px;
+            padding: 40px 30px;
+            background: rgba(10, 15, 45, 0.75);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 0, 128, 0.3);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 0, 128, 0.25);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        h2 { 
+            font-family: 'Cinzel', serif; font-size: 2rem; font-weight: 700; 
+            color: #ff0080; margin-top: 0; text-shadow: 0 0 15px rgba(255, 0, 128, 0.6);
+        }
+
+        p { font-size: 1.1rem; line-height: 1.6; margin-bottom: 30px; font-weight: 300; }
+
+        .hidden { opacity: 0; pointer-events: none; visibility: hidden; position: absolute; z-index: -1; }
+        .active { opacity: 1; pointer-events: all; visibility: visible; position: relative; z-index: 10; }
+
+        /* --- INTRO ANIMATION SCREEN --- */
+        #screen-intro {
+            background: rgba(5, 0, 20, 0.9);
+            border: 2px solid #ff0080;
+        }
+        .intro-title {
+            font-family: 'Cinzel', serif;
+            font-size: 2.8rem;
+            color: #ff0080;
+            text-shadow: 0 0 25px rgba(255, 0, 128, 0.8), 0 0 10px #4169E1;
+            animation: introPulse 2s infinite alternate;
+            margin-bottom: 10px;
+        }
+        .intro-subtitle {
+            font-size: 1.2rem;
+            letter-spacing: 4px;
+            color: #4169E1;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        @keyframes introPulse {
+            0% { transform: scale(0.95); text-shadow: 0 0 15px rgba(255,0,128,0.5); }
+            100% { transform: scale(1.05); text-shadow: 0 0 30px rgba(255,0,128,0.9), 0 0 15px #4169E1; }
+        }
+
+        /* --- SELECTION SCREEN --- */
+        .selection-box {
+            display: flex; justify-content: space-around; width: 100%; margin: 20px 0; gap: 15px;
+        }
+        .avatar-card, .ship-card {
+            background: rgba(0,0,0,0.5); padding: 15px; border-radius: 15px;
+            border: 2px solid transparent; cursor: pointer; transition: all 0.3s; flex: 1;
+        }
+        .avatar-card.selected, .ship-card.selected {
+            border-color: #ff0080; box-shadow: 0 0 15px rgba(255, 0, 128, 0.6); transform: scale(1.05);
+            background: rgba(255, 0, 128, 0.1);
+        }
+        .emoji-large { font-size: 2.5rem; margin-bottom: 8px; display: block; }
+        .card-label { font-size: 0.9rem; font-weight: 600; color: #ff66b2; }
+
+        /* --- MAZE SCREEN --- */
+        #maze-canvas {
+            background: rgba(0,0,0,0.6); border: 2px solid #ff0080; border-radius: 10px;
+            margin-bottom: 15px; box-shadow: 0 0 20px rgba(65, 105, 225, 0.6);
+            max-width: 100%; height: auto;
+        }
+        .controls { display: grid; grid-template-columns: 45px 45px 45px; gap: 8px; justify-content: center; margin-top: 5px; }
+        .controls button {
+            background: rgba(255, 0, 128, 0.2); border: 1px solid #ff0080; color: #ff0080;
+            border-radius: 8px; width: 45px; height: 45px; font-size: 1.3rem; cursor: pointer;
+        }
+        .controls button:active { background: rgba(255, 0, 128, 0.6); }
+
+        /* --- KEY SCREEN --- */
+        .key-container {
+            margin-top: 20px; cursor: pointer; animation: float 2s infinite ease-in-out;
+        }
+        .key-icon { font-size: 4rem; filter: drop-shadow(0 0 15px #ff0080); }
+        .key-text { color: #ff0080; font-weight: 600; font-size: 1.2rem; margin-top: 10px; text-transform: uppercase; letter-spacing: 2px;}
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-15px); } 100% { transform: translateY(0px); } }
+
+        /* --- RIDDLES SCREEN --- */
+        input {
+            width: 90%; padding: 15px; font-size: 1.1rem; border: none; border-bottom: 2px solid rgba(255, 0, 128, 0.5);
+            background: rgba(0, 0, 0, 0.4); color: white; text-align: center; outline: none; margin-bottom: 25px;
+            font-family: 'Montserrat', sans-serif; border-radius: 5px 5px 0 0; transition: all 0.3s;
+        }
+        input:focus { border-bottom: 2px solid #ff0080; background: rgba(255, 0, 128, 0.1); }
+        .btn-primary {
+            background: linear-gradient(45deg, #4169E1, #ff0080); color: #ffffff; border: none; padding: 15px 35px;
+            font-size: 1.1rem; cursor: pointer; border-radius: 30px; font-weight: 600; text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(255, 0, 128, 0.4); transition: all 0.3s ease;
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(255, 0, 128, 0.6); }
+        .error { color: #ff6b6b; font-size: 0.95rem; margin-top: -15px; margin-bottom: 20px; display: none; font-weight: 600; }
+
+        /* --- CHEST CSS --- */
+        .chest-wrapper { position: relative; width: 160px; height: 130px; margin: 30px auto; cursor: pointer; perspective: 1000px; transition: transform 0.3s ease; }
+        .chest-wrapper:hover { transform: scale(1.05); }
+        .chest-body { position: absolute; bottom: 0; width: 160px; height: 85px; background: linear-gradient(to bottom, #1d2671, #c33764); border: 4px solid #ff0080; border-radius: 5px 5px 12px 12px; z-index: 2; box-shadow: inset 0 0 15px rgba(0,0,0,0.8), 0 15px 30px rgba(0,0,0,0.8); }
+        .chest-lid { position: absolute; bottom: 85px; width: 160px; height: 55px; background: linear-gradient(to bottom, #c33764, #1d2671); border: 4px solid #ff0080; border-bottom: none; border-radius: 80px 80px 0 0; transform-origin: bottom center; transition: transform 1.2s cubic-bezier(0.25, 0.8, 0.25, 1); z-index: 3; }
+        .chest-lock { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 24px; height: 30px; background: linear-gradient(to bottom, #ff0080, #8b0046); border-radius: 4px; border: 2px solid #ff66b2; z-index: 4; transition: opacity 0.5s; }
+        .chest-lock::after { content: ''; position: absolute; top: 12px; left: 8px; width: 4px; height: 8px; background: #ffffff; border-radius: 2px; }
+        .chest-wrapper.open .chest-lid { transform: rotateX(115deg); }
+        .chest-wrapper.open .chest-lock { opacity: 0; }
+        .chest-glow { position: absolute; top: -60px; left: -45px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(255, 0, 128, 0.8) 0%, rgba(65, 105, 225, 0) 60%); opacity: 0; transition: opacity 1.5s ease 0.8s; z-index: 1; pointer-events: none; animation: pulseGlow 2s infinite alternate; }
+        .chest-wrapper.open .chest-glow { opacity: 1; }
+        @keyframes pulseGlow { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.15); opacity: 1; } }
+
+        /* --- PLAYLIST --- */
+        #playlist-content { opacity: 0; transform: translateY(20px); transition: all 1.5s ease 1.5s; display: none; }
+        #playlist-content.visible { display: block; opacity: 1; transform: translateY(0); }
+        .youtube-btn {
+            display: inline-block; margin-top: 15px; padding: 15px 40px; background: #FF0000; color: white; text-decoration: none;
+            font-size: 1.2rem; font-weight: bold; border-radius: 30px; box-shadow: 0 5px 20px rgba(255, 0, 0, 0.4); transition: all 0.3s ease;
+        }
+        .youtube-btn:hover { background: #cc0000; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+<div class="overlay"></div>
+
+<!-- SCHERMO 0: INTRO ANIMAZIONE -->
+<div id="screen-intro" class="screen active">
+    <div class="intro-title">Medieval Autumn</div>
+    <div class="intro-subtitle">Un viaggio magico stellare</div>
+    <p style="font-size: 0.95rem; opacity: 0.8; margin-bottom: 20px;">Preparando i regni incantati...</p>
+    <button class="btn-primary" onclick="showScreen('screen-selection')">Inizia Avventura</button>
+</div>
+
+<!-- SCHERMO 1: SELEZIONE -->
+<div id="screen-selection" class="screen hidden">
+    <h2>Scegli il tuo Personaggio</h2>
+    <p>Seleziona il tuo adorabile avatar e il tuo mezzo di trasporto per attraversare il regno.</p>
+    
+    <div class="selection-box">
+        <div class="avatar-card selected" onclick="selectAvatar(this)">
+            <span class="emoji-large">🐧❄️</span>
+            <span class="card-label">Pinguino Magico</span>
+        </div>
+        <div class="avatar-card" onclick="selectAvatar(this)">
+            <span class="emoji-large">👑🐱</span>
+            <span class="card-label">Principessa Gatta</span>
+        </div>
+        <div class="avatar-card" onclick="selectAvatar(this)">
+            <span class="emoji-large">🧚🏻‍♀️✨</span>
+            <span class="card-label">Fata Stellare</span>
+        </div>
+    </div>
+
+    <div class="selection-box" style="margin-top: 10px;">
+        <div class="ship-card selected" onclick="selectShip(this)">
+            <span class="emoji-large">🪄✨</span>
+            <span class="card-label">Bacchetta Magica</span>
+        </div>
+        <div class="ship-card" onclick="selectShip(this)">
+            <span class="emoji-large">🍂🛸</span>
+            <span class="card-label">Nave Autunnale</span>
+        </div>
+    </div>
+
+    <button class="btn-primary" style="margin-top: 15px;" onclick="initMaze()">Entra nel Labirinto</button>
+</div>
+
+<!-- SCHERMO 2: LABIRINTO -->
+<div id="screen-maze" class="screen hidden">
+    <h2>Il Labirinto del Regno</h2>
+    <p style="margin-bottom: 10px; font-size: 0.95rem;">Guida il tuo personaggio fino al forziere dorato superando i passaggi.</p>
+    <canvas id="maze-canvas" width="400" height="400"></canvas>
+    
+    <!-- Controlli per dispositivi mobili -->
+    <div class="controls">
+        <div></div>
+        <button onclick="movePlayer(0, -1)">⬆️</button>
+        <div></div>
+        <button onclick="movePlayer(-1, 0)">⬅️</button>
+        <button onclick="movePlayer(0, 1)">⬇️</button>
+        <button onclick="movePlayer(1, 0)">➡️</button>
+    </div>
+</div>
+
+<!-- SCHERMO 3: LA CHIAVE -->
+<div id="screen-key" class="screen hidden">
+    <h2>Forziere Trovato!</h2>
+    <p>Hai trovato il forziere medievale, ma è sigillato da incantesimi. Rompi i lucchetti per scoprire il mistero.</p>
+    
+    <div class="chest-wrapper" style="pointer-events: none; margin-bottom: 0;">
+        <div class="chest-body"><div class="chest-lock"></div></div>
+        <div class="chest-lid"></div>
+    </div>
+
+    <div class="key-container" onclick="startRiddles()">
+        <div class="key-icon">🗝️</div>
+        <div class="key-text">Tocca per sbloccare</div>
+    </div>
+</div>
+
+<!-- SCHERMO 4: ENIGMI -->
+<div id="screen-riddles" class="screen hidden">
+    <h2 id="level-title">Lucchetto 1</h2>
+    <p id="riddle-text"></p>
+    <input type="text" id="answer-input" placeholder="La tua risposta..." autocomplete="off">
+    <div id="error-msg" class="error">Non è esattamente questo... riprova.</div>
+    <br>
+    <button class="btn-primary" onclick="checkAnswer()">Decifra</button>
+</div>
+
+<!-- SCHERMO 5: IL FORZIERE FINALE -->
+<div id="screen-final" class="screen hidden">
+    <h2>Il Tesoro del Regno</h2>
+    <p id="chest-instruction">Tutti i lucchetti hanno ceduto. Clicca sul forziere per rivelare la magia.</p>
+    
+    <div class="chest-wrapper" id="final-chest" onclick="openFinalChest()">
+        <div class="chest-glow"></div>
+        <div class="chest-lid"></div>
+        <div class="chest-body"><div class="chest-lock"></div></div>
+    </div>
+
+    <div id="playlist-content">
+        <p>Questa musica è nostra. Mettiti le cuffie, chiudi gli occhi e ascolta.</p>
+        <a href="https://youtube.com/playlist?list=PLHaPKFoM2qQs&si=SNgMiwfhKMVfWmLC" target="_blank" class="youtube-btn">
+            Apri Playlist su YouTube
+        </a>
+    </div>
+</div>
+
+<script>
+    let selectedAvatarEmoji = "🐧❄️";
+    let selectedVehicleEmoji = "🪄✨";
+
+    function selectAvatar(element) {
+        document.querySelectorAll('.avatar-card').forEach(c => c.classList.remove('selected'));
+        element.classList.add('selected');
+        selectedAvatarEmoji = element.querySelector('.emoji-large').innerText;
+    }
+
+    function selectShip(element) {
+        document.querySelectorAll('.ship-card').forEach(c => c.classList.remove('selected'));
+        element.classList.add('selected');
+        selectedVehicleEmoji = element.querySelector('.emoji-large').innerText;
+    }
+
+    function showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => {
+            s.classList.remove('active');
+            s.classList.add('hidden');
+        });
+        document.getElementById(screenId).classList.remove('hidden');
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    // --- MATRICE DEL LABIRINTO INTEGRATA ---
+    const canvas = document.getElementById("maze-canvas");
+    const ctx = canvas.getContext("2d");
+    const gridSize = 20;
+    const tileSize = 20; // 20 * 20 = 400px
+    
+    const mazeMap = [
+        [2, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+        [1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1],
+        [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+        [1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1],
+        [0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1]
+    ];
+
+    let playerPos = { x: 0, y: 0 };
+    let gameActive = false;
+
+    function initMaze() {
+        showScreen('screen-maze');
+        playerPos = { x: 0, y: 0 };
+        gameActive = true;
+        drawMaze();
+    }
+
+    function drawMaze() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let row = 0; row < mazeMap.length; row++) {
+            for (let col = 0; col < mazeMap[row].length; col++) {
+                let cell = mazeMap[row][col];
+                let x = col * tileSize;
+                let y = row * tileSize;
+
+                if (cell === 0) {
+                    ctx.fillStyle = "#0a0f2d";
+                    ctx.fillRect(x, y, tileSize, tileSize);
+                    ctx.strokeStyle = "#ff0080";
+                    ctx.strokeRect(x, y, tileSize, tileSize);
+                } else if (cell === 1) {
+                    ctx.fillStyle = "rgba(255, 0, 128, 0.2)";
+                    ctx.fillRect(x, y, tileSize, tileSize);
+                } else if (cell === 2) {
+                    ctx.fillStyle = "rgba(65, 105, 225, 0.4)";
+                    ctx.fillRect(x, y, tileSize, tileSize);
+                } else if (cell === 3) {
+                    ctx.fillStyle = "rgba(255, 0, 128, 0.2)";
+                    ctx.fillRect(x, y, tileSize, tileSize);
+                    ctx.font = "16px Arial";
+                    ctx.fillText("📦", x + 2, y + 16);
+                }
+            }
+        }
+        ctx.font = "14px Arial";
+        ctx.fillText(selectedAvatarEmoji.slice(0, 2), playerPos.x * tileSize + 2, playerPos.y * tileSize + 15);
+    }
+
+    function movePlayer(dx, dy) {
+        if (!gameActive) return;
+        let newX = playerPos.x + dx;
+        let newY = playerPos.y + dy;
+
+        if (newX >= 0 && newX < gridSize && newY >= 0 && newY < gridSize) {
+            if (mazeMap[newY][newX] !== 0) {
+                playerPos.x = newX;
+                playerPos.y = newY;
+                drawMaze();
+
+                if (mazeMap[newY][newX] === 3) {
+                    gameActive = false;
+                    setTimeout(() => showScreen('screen-key'), 500);
+                }
+            }
+        }
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (!gameActive) return;
+        if (e.key === "ArrowUp" || e.key === "w") movePlayer(0, -1);
+        if (e.key === "ArrowDown" || e.key === "s") movePlayer(0, 1);
+        if (e.key === "ArrowLeft" || e.key === "a") movePlayer(-1, 0);
+        if (e.key === "ArrowRight" || e.key === "d") movePlayer(1, 0);
+    });
+
+    // --- ENIGMI ---
+    const riddles = [
+        {
+            title: "Lucchetto 1: La Canzone",
+            text: "Se guardi l'orologio a metà esatta della notte fonda, troverai il nome di questo gruppo. Loro cantano il brano che mi fa sempre pensare a te, e il cui titolo è, letteralmente, il motivo per cui sto facendo tutto questo. Come si chiama la canzone?",
+            keywords: ["por ti", "3am", "3 am"]
+        },
+        {
+            title: "Lucchetto 2: Il Riflesso",
+            text: "Posso passare ore ad aggiustare colori, ombre e illuminazione nei miei video, ma nessuna telecamera o filtro potrà mai catturare la luminosità e la profondità di ciò che vedo quando ti guardo in faccia. Cos'è che mi tiene ipnotizzato?",
+            keywords: ["occhi", "i tuoi occhi", "gli occhi"]
+        },
+        {
+            title: "Lucchetto 3: La Nostra Epoca",
+            text: "Cambia il paesaggio, cadono le foglie e il clima diventa perfetto per noi. Qual è il periodo dell'anno che piace di più a entrambi? (Parola chiave)",
+            keywords: ["autunno", "autumn"]
+        }
+    ];
+
+    let currentLevel = 0;
+
+    function startRiddles() {
+        showScreen('screen-riddles');
+        loadRiddle();
+    }
+
+    function normalizeText(text) {
+        return text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+    }
+
+    function loadRiddle() {
+        document.getElementById("level-title").innerText = riddles[currentLevel].title;
+        document.getElementById("riddle-text").innerText = riddles[currentLevel].text;
+        document.getElementById("answer-input").value = "";
+        document.getElementById("error-msg").style.display = "none";
+    }
+
+    function checkAnswer() {
+        const userInput = normalizeText(document.getElementById("answer-input").value);
+        const keywords = riddles[currentLevel].keywords.map(normalizeText);
+        
+        const isCorrect = keywords.some(keyword => userInput.includes(keyword));
+
+        if (isCorrect) {
+            currentLevel++;
+            const screen = document.getElementById("screen-riddles");
+            screen.style.opacity = 0;
+            
+            setTimeout(() => {
+                if (currentLevel < riddles.length) {
+                    loadRiddle();
+                    screen.style.opacity = 1;
+                } else {
+                    showScreen('screen-final');
+                }
+            }, 500);
+        } else {
+            document.getElementById("error-msg").style.display = "block";
+            const input = document.getElementById("answer-input");
+            input.style.transform = "translateX(-10px)";
+            setTimeout(() => input.style.transform = "translateX(10px)", 100);
+            setTimeout(() => input.style.transform = "translateX(-10px)", 200);
+            setTimeout(() => input.style.transform = "translateX(0)", 300);
+        }
+    }
+
+    document.getElementById("answer-input").addEventListener("keypress", (e) => {
+        if (e.key === "Enter") checkAnswer();
+    });
+
+    // --- FORZIERE FINALE ---
+    function openFinalChest() {
+        const chest = document.getElementById("final-chest");
+        if (!chest.classList.contains("open")) {
+            chest.classList.add("open");
+            document.getElementById("chest-instruction").style.opacity = "0";
+            
+            const playlistContent = document.getElementById("playlist-content");
+            setTimeout(() => {
+                playlistContent.classList.add("visible");
+            }, 100);
+        }
+    }
+</script>
+
+</body>
+</html>
